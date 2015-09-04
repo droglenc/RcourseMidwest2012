@@ -1,0 +1,393 @@
+\documentclass{article}
+\input{c:/aaaWork/zGnrlLatex/GnrlPreamble}
+\hypersetup{pdftitle = RFish Hayward 2012 Assignments Keys}
+\input{c:/aaaWork/zGnrlLatex/JustRPreamble}
+
+\begin{document}
+<<setup, echo=FALSE,include=FALSE>>=
+# THIS SECTION CAN BE GENERALLY BE IGNORED IF VIEWED AS AN R SCRIPT ############
+# knitr custom hooks - set default plot options
+knit_hooks$set(par1 = function(before, options, envir) {
+    if (before) par(mar=c(3.5,3.5,1,1),mgp=c(2.1,0.4,0),tcl=-0.2)
+})
+# knitr options -- figure handling
+opts_chunk$set(fig.path='Figs/', fig.width=3.5, fig.height=3.5, out.width='.3\\linewidth', fig.align='center')
+# knitr options -- output look
+opts_chunk$set(prompt=TRUE,comment='', tidy=FALSE, highlight=TRUE)
+# r options -- Ogle preferences
+options(width=90, show.signif.stars=FALSE, continue=" ", contrasts=c("contr.sum","contr.poly"), useFancyQuotes=FALSE)
+# A list of required packages -- for reproducibilities purpose
+rqrd <- c("FSA","nlstools")
+# miscOgle is only needed for knitting, not for running the main analytical code
+library(FSA)
+library(nlstools)
+library(plotrix)
+# END OF SECTION TO BE IGNORED #################################################
+@
+
+\section{R Terminology Assignment Key}
+\begin{enumerate}
+  \item Load the data in the \dfile{RuffeBio.csv} file into a data frame in R.
+<<eval=-1>>=
+setwd("C:/aaaWork/Web/fishR/courses/Midwest2012/CourseMaterial")
+ruf <- read.csv("RuffeBio.csv")
+str(ruf)
+ruf$tl[17]
+@
+    \begin{enumerate}
+      \item There are \Sexpr{ncol(ruf)} variables in this data frame.
+      \item Data was recorded on \Sexpr{nrow(ruf)} ruffe in this data frame.
+      \item The \var{tl} variable is a numeric variable type.
+      \item The \var{maturity} variable is a factor variable type.
+      \item The \var{tl} for the 17th measured individual is \Sexpr{ruf$tl[17]} mm.
+    \end{enumerate}
+    
+  \item For each situation below, create a new data frame (from the original) and record how many fish are in that data frame.
+    \begin{enumerate}
+      \item Just female ruffe.
+<<>>=
+ruf1 <- Subset(ruf,sex=="female")
+nrow(ruf1)
+@
+      \item Just ruffe greater than 110 mm.
+<<>>=
+ruf2 <- Subset(ruf,tl>110)
+nrow(ruf2)
+@
+      \item Just ruffe between 80 and 110 mm.
+<<>>=
+ruf3 <- Subset(ruf,tl>80 & tl<110)
+nrow(ruf3)
+@
+      \item Excluding all fish of an ``unknown'' sex.
+<<>>=
+ruf5 <- Subset(ruf,sex!="unknown")
+nrow(ruf5)
+@
+    \end{enumerate}
+    
+\newpage
+  \item Create new variables in the original data frame for the following situations.
+    \begin{enumerate}
+      \item Fulton's condition factor (The weight of the fish divided by the cubed length of the fish).
+<<>>=
+ruf$fult <- ruf$wt/(ruf$tl^3)*10000
+@
+    \end{enumerate}
+  \vspace{12pt}
+  \item If you have time ...
+    \begin{enumerate}
+      \item Create a length variable that is the total length in inches.
+<<>>=
+ruf$tlin <- ruf$tl/25.4
+@
+      \item Create a subset of just male ruffe with a total length less than 80 mm.
+<<>>=
+ruf4 <- Subset(ruf,sex=="male" & tl<80)
+nrow(ruf4)
+@
+      \item What is the \var{tl} for all but the 10th individual?
+<<>>=
+ruf$tl[-10]
+@
+      \item Show all recorded information for the 11th individual.
+<<>>=
+ruf[11,]
+@
+    \end{enumerate}
+\end{enumerate}
+
+
+\clearpage
+\section{R Summarization Assignment Key}
+\begin{enumerate}
+  \item Load the data in the \dfile{LakeTroutALTER.xls} file into a data frame in R.
+<<eval=-1>>=
+setwd("C:/aaaWork/Web/fishR/courses/Midwest2012/CourseMaterial")
+lkt <- read.csv("LakeTroutALTER.csv")
+str(lkt)
+@
+    \begin{enumerate}
+      \item There are \Sexpr{ncol(lkt)} variables in this data frame.
+      \item Data was recorded on \Sexpr{nrow(lkt)} ruffe in this data frame.
+      \item The \var{age} variable is a numeric variable type.
+      \item The \var{sex} variable is a factor variable type.
+    \end{enumerate}
+  
+  \vspace{12pt}  
+  \item Summarize age in the following ways:
+    \begin{enumerate}  
+      \item Construct age-frequency (number-at-age) and age-percentage (percentage-at-age) tables.
+<<>>=
+( agetbl <- table(lkt$age) )
+( ageptbl <- round(prop.table(agetbl)*100,1) )
+@
+      \item Construct a bar chart of the age-percentage table.
+<<par1=TRUE>>=
+barplot(ageptbl,xlab="Age",ylab="Percentage of Fish",ylim=c(0,12))
+@
+
+      \item Construct an age-percentage table separated by sex (e.g., what percentage of males were age-17?).
+<<>>=
+agetbl2 <- table(lkt$sex,lkt$age)
+round(prop.table(agetbl2,margin=1)*100,1)
+@
+    \end{enumerate}
+  
+  \vspace{12pt}
+  \item Summarize total length in the following ways:
+    \begin{enumerate}
+      \item Compute summary statistics of total length for all fish.
+<<>>=
+Summarize(~tl,data=lkt,digits=1)
+@
+      \item Construct a histogram of total length using 50-mm length increments.
+<<par1=TRUE>>=
+hist(~tl,data=lkt,right=TRUE,breaks=seq(200,600,50),xlab="Total Length (mm)")
+@
+
+      \item Compute summary statistics of total length separately for each age.
+<<warning=FALSE>>=
+( smrzTL <- Summarize(tl~age,data=lkt,digits=1) )
+@
+      \item Construct a bar plot of mean length-at-age.
+<<par1=TRUE>>=
+plotH(mean~age,data=smrzTL,xlab="Age",ylab="Mean TL (mm)",ylim=c(0,600))
+@
+    \end{enumerate}
+
+  \vspace{12pt}
+  \item Examine the following relationships (graphically and, if appropriate, numerically):
+    \begin{enumerate}
+      \item Between total length and weight.
+<<par1=TRUE>>=
+plot(w~tl,data=lkt,xlab="Total Length (mm)",ylab="Weight (g)",pch=16)
+@
+      \item Between total length and otolith radius.
+<<par1=TRUE>>=
+plot(otorad~tl,data=lkt,xlab="Total Length (mm)",ylab="Otolith Radius (mm)",pch=16)
+@
+    \end{enumerate}
+  
+  \vspace{12pt}
+  \item If you have time ...
+    \begin{enumerate}
+        \item Compute summary statistics of total length separated by sex of the fish.
+<<>>=
+Summarize(tl~sex,data=lkt,digits=1)
+@
+      \item Construct separate histograms of total length for males and females.
+<<par1=TRUE, fig.width=7, fig.height=3.5, out.width='.8\\linewidth'>>=
+hist(tl~sex,data=lkt,right=TRUE,breaks=seq(200,600,50),xlab="Total Length (mm)")
+@
+      \item Examine the relationship between age and total length.
+<<par1=TRUE>>=
+plot(tl~age,data=lkt,xlab="Age",ylab="Total Length (mm)",pch=16)
+@
+      \item Examine the relationship between age and total length with separate symbols for different sexes.
+<<par1=TRUE>>=
+pts <- c(16,3)
+plot(tl~age,data=lkt,xlab="Age",ylab="Total Length (mm)",pch=pts[sex])
+legend("bottomright",pch=pts,legend=levels(lkt$sex))
+@
+    \end{enumerate}
+
+\end{enumerate}
+
+
+
+\clearpage
+\section{R Size Structure Assignment Key}
+\begin{enumerate}
+  \item Load the data in the \dfile{Lab1a.csv} file into a data frame in R (this is the same data used in the handout).
+<<eval=-1>>=
+setwd("C:/aaaWork/Web/fishR/courses/Midwest2012/CourseMaterial")
+lab1 <- read.csv("Lab1a.csv")
+lab1$len <- lab1$inches*25.4
+@ 
+  \item Compute the PSD value for walleye.
+<<>>=
+pssVal("Walleye",units="mm")
+wae <- Subset(lab1,species=="WAE")
+wae <- lencat(~len,data=wae,startcat=250,w=10)
+wae.lf <- table(wae$LCat)
+wae.rc <- rcumsum(wae.lf)
+wae.rc["380"]/wae.rc["250"]
+@
+  
+  \vspace{12pt}
+  \item Compute the PSD value for yellow perch.
+<<>>=
+pssVal("Yellow perch",units="mm")
+yep <- Subset(lab1,species=="YEP")
+yep <- lencat(~len,data=yep,startcat=70,w=10)
+yep.lf <- table(yep$LCat)
+yep.rc <- rcumsum(yep.lf)
+yep.rc["200"]/yep.rc["130"]
+@
+
+  \vspace{12pt}
+  \item Construct a tic-tac-toe graph with a point for walleye and yellow perch on it.
+<<par1=TRUE>>=
+tictactoe()
+tictactoeAdd(c(wae.rc["380"],wae.rc["250"]),c(yep.rc["200"],yep.rc["130"]),
+pt.col="black")
+@
+  
+  \vspace{12pt}
+  \item If you have time ...
+    \begin{enumerate}
+      \item Compute the RSD-500 for walleye.
+<<>>=
+wae.rc["500"]/wae.rc["250"]
+@
+      \item Construct a tic-tac-toe graph with two points -- one for walleye and yellow perch and one for largemouth bass and bluegill.  [Note: you can copy the code for the largemouth bass and bluegill from the handout.]
+<<results='hide', fig.keep='none'>>=
+source("03_PSD.R")
+@
+<<par1=TRUE>>=
+tictactoe()
+tictactoeAdd(c(wae.rc["380"],wae.rc["250"]),c(yep.rc["200"],yep.rc["130"]),
+pt.col="black")
+tictactoeAdd(c(lmb.rcum["300"],lmb.rcum["200"]),c(bg.rcum["200"],bg.rcum["150"]),
+pt.col="blue")
+@
+    \end{enumerate}
+\end{enumerate}
+
+
+
+\clearpage
+\section{R Catch Curve Assignment Key}
+\begin{enumerate}
+  \item The population biology of Lake Superior lake trout .... 
+    \begin{enumerate}
+      \item Enter the data into vectors and then combine into a data frame.
+<<>>=
+lkt <- data.frame(age=3:14,catch=c(5,18,21,10,45,109,95,63,42,25,13,4))
+lkt$logcatch <- log(lkt$catch)
+@
+      \item Plot log(catch) versus age. Which ages best represent the descending portion of the catch-curve?
+<<par1=TRUE>>=
+plot(logcatch~age,data=lkt)
+@
+      \item Fit the linear model required to estimate instantaneous total mortality to these data with \R{lm()}.  [Note: it may be easiest to combined the raw data into a data frame and then use \R{Subset()} to create a new data frame with just the ages on the descending limb.]  What is an estimate of the instantaneous total mortality rate?
+<<>>=
+lkt1 <- Subset(lkt,age>=9 & age <14)
+lm1 <- lm(logcatch~age,data=lkt1)
+coef(lm1)
+( z <- -coef(lm1)[2] )
+@
+      \item Find the instantaneous total mortality rate using catchCurve().  Do these results match your results in the previous question?
+<<>>=
+cc2 <- catchCurve(catch~age,data=lkt,9:13)
+summary(cc2)
+@
+    \end{enumerate}
+
+\clearpage
+  \item Curtis (1990) examined the population dynamics ....  
+\begin{enumerate}
+  \item Estimate, with 95\% confidence interval, the instantaneous total mortality rate of fish caught in 1963.  Describe which ages of fish you used to make your estimate and why you chose those ages.
+<<>>=
+cr63 <- data.frame(age=6:14,ct=c(129,339,331,192,70,16,0.5,0.5,0.5))
+cc63c <- catchCurve(ct~age,data=cr63,8:11)
+summary(cc63c)
+@
+  \item Estimate, with 95\% confidence interval, the instantaneous total mortality rate for fish of the 1963 year-class.  Describe which ages of fish you used to make your estimate and why you chose those ages.
+<<>>=
+long63 <- data.frame(age=c(6,10:14),ct=c(45,491,163,117,18,7))
+cc63l <- catchCurve(ct~age,data=long63,10:14)
+summary(cc63l)
+@
+\end{enumerate}
+\end{enumerate}
+
+
+\clearpage
+\section{R Growth Assignment Key}
+\begin{enumerate}
+  \item The length and otolith age of sculpins captured in the Arctic Long-Term Ecological Research area were recorded in \dfile{SculpinALTER.xls}.  Use the total length and age data to answer the following questions.
+    \begin{enumerate}
+      \item Load these data into an R data frame.
+<<eval=-1>>=
+setwd("C:/aaaWork/Web/fishR/courses/Midwest2012/CourseMaterial")
+sc <- read.csv("SculpinALTER.csv")
+str(sc)
+@
+      \item Compute estimates for the three parameters of a ``traditional'' von Bertalanffy growth model.
+<<>>=
+svb1 <- vbStarts(tl~age,data=sc,type="typical")
+vb1 <- vbFuns("typical",simple=TRUE)
+fit1 <- nls(tl~vb1(age,Linf,K,t0),data=sc,start=svb1)
+coef(fit1)
+@
+      \item Construct a plot of length versus age with the best-fit von Bertalanffy growth model superimposed.
+<<par1=TRUE>>=
+fitPlot(fit1,xlab="Age",ylab="Total Length (in)",main="",
+        col.pt=rgb(0,0,0,0.1),col.mdl="black")
+@
+    \end{enumerate}
+    
+  \newpage
+  \item If you have time ... 
+    \begin{enumerate}
+      \item Compute estimates for the three parameters of a ``Galucci and Quinn'' parameterization of the von Bertalanffy growth model.
+<<>>=
+vb2 <- vbFuns("GalucciQuinn",simple=TRUE)
+svb2 <- vbStarts(tl~age,data=sc,type="GalucciQuinn")
+fit2 <- nls(tl~vb2(age,omega,K,t0),data=sc,start=svb2)
+coef(fit2)
+@
+      \item Construct a length-weight regression model for these sculpins.
+<<>>=
+sc$logTL <- log(sc$tl)
+sc$logW <- log(sc$w)
+lm1 <- lm(logW~logTL,data=sc)
+summary(lm1)
+@
+    \end{enumerate}
+\end{enumerate}
+
+
+
+\clearpage
+\section{R Mark-Recapture Assignment Key}
+\begin{enumerate}
+  \item Warren \textit{et al.} (2004) examined the population of rainbow trout in the Upper Niagara Springs pond in 2000.  Fish were captured at two times by using an electrofishing unit attached to a driftboat.  The capture histories of all fish examined in the two samples are recorded in \dfile{RBTroutUNSP.xls}.  Load these data into a data frame in R and answer the following questions.
+    \begin{enumerate}
+      \item Create a summary of the capture histories.
+<<eval=-1>>=
+setwd("C:/aaaWork/Web/fishR/courses/Midwest2012/CourseMaterial")
+rbt <- read.csv("RBTroutUNSP.csv")
+str(rbt)
+q2.ch <- capHistSum(rbt,cols=-1)
+q2.ch$caphist
+@
+      \item From your capture history summary assign values to each of these symbols (M, n, m).
+<<>>=
+q2 <- mrClosed(M=74,n=110,m=11,type="Chapman")
+@
+      \item Construct an appropriate population estimate, with a 95\% confidence interval, for Upper Niagara Springs pond in 2000.  State which method you used to construct the confidence interval and explain why you chose that method.
+<<>>=
+summary(q2)
+confint(q2)
+@
+    \end{enumerate}
+  
+  \item Mraz (1968) examined the population dynamics of ....
+<<>>=
+n1 <- c(321,412,178,415,367)
+m1 <- c(0,45,55,93,113)
+R1 <- c(n1[1:4],0)
+mr1 <- mrClosed(n=n1,m=m1,R=R1,type="Schnabel")
+summary(mr1)
+confint(mr1)
+@
+\end{enumerate}
+
+
+<<finish, echo=FALSE, results='asis'>>=
+swvFinish("RFish_Midwest12_AssignmentsKey",rqrdPkgs=rqrd,newPage=TRUE)
+@
+\end{document}

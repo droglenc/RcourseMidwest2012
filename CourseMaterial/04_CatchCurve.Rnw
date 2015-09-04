@@ -1,0 +1,50 @@
+\documentclass{article}
+\input{c:/aaaWork/zGnrlLatex/GnrlPreamble}
+\input{c:/aaaWork/zGnrlLatex/justRPreamble}
+\hypersetup{pdftitle = Midwest2013 HO - Catch Curve}
+
+\begin{document}
+  \titleRHO{R Catch Curve}{Midwest (Wichita)}{Dec}
+
+<<setup,echo=FALSE,include=FALSE>>=
+source("c:/aaaWork/zGnrlLatex/knitr_setup.R")
+@
+
+<<results='hide', message=FALSE, warning=FALSE>>=
+library(FSA)      # Subset, fitPlot, catchCurve
+@
+
+\subsection{Tobin Harbor Brook Trout Data}
+<<>>=
+df <- data.frame(age=0:5,catch=c(47,102,126,104,81,64))
+df$logct <- log(df$catch)
+df
+@
+
+\subsection{Linear Model Method}
+<<par1=TRUE>>=
+plot(logct~age,data=df,pch=16,cex=1.25)
+@
+
+<<par1=TRUE>>=
+( df1 <- Subset(df,age>=2) )
+lm1 <- lm(logct~age,data=df1)
+coef(lm1)
+summary(lm1)
+confint(lm1)
+fitPlot(lm1,main="",xlab="Age (yrs)",ylab="Log(Catch)")
+@
+
+\subsection{Convenience Function Method}
+<<par1=TRUE>>=
+cc1 <- catchCurve(catch~age,data=df,ages=2:5)
+summary(cc1)
+confint(cc1)
+plot(cc1)
+@
+
+<<echo=FALSE, results='hide', message=FALSE>>=
+swvCode("04_CatchCurve.Rnw",moreItems="set_parent")
+@
+
+\end{document}
